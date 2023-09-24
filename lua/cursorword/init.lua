@@ -25,6 +25,13 @@ local DEFAULT_OPTS = {
 		},
 		file_patterns = {
 			"%.png$",
+			"%.jpg$",
+			"%.jpeg$",
+			"%.pdf$",
+			"%.zip$",
+			"%.tar$",
+			"%.mp3$",
+			"%.mp4$",
 		},
 	},
 	highlight = {
