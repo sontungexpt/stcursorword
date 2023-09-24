@@ -17,7 +17,7 @@ local DEFAULT_OPTS = {
 	min_word_length = 2,
 	excluded = {
 		filetypes = {
-		  "TelescopePrompt"
+		  "TelescopePrompt",
     },
 		buftypes = {
 			-- "nofile",
@@ -31,10 +31,13 @@ local DEFAULT_OPTS = {
 	  underline = true,
   }
 }
+
 local matchdelete = function()
 	if w.stcw_match_id ~= nil then
 		fn.matchdelete(w.stcw_match_id)
 		w.stcw_match_id = nil
+		stcw_old_scol_pos = math.huge
+		stcw_old_ecol_pos = -1
 	end
 end
 
@@ -42,7 +45,7 @@ local matchadd = function(user_opts)
 	local pos = api.nvim_win_get_cursor(0)
 	local col = pos[2]
 
-	-- if cusor not move out of the word, do nothing
+	-- if cusor doesn't move out of the word, do nothing
 	if g.stcw_enabled and stcw_old_line_pos == pos[1] and col >= stcw_old_scol_pos and col < stcw_old_ecol_pos then
 		return
 	end
@@ -65,10 +68,6 @@ local matchadd = function(user_opts)
 		if #word < user_opts.min_word_length or #word > user_opts.max_word_length then return end
 
 		w.stcw_match_id = fn.matchadd(stcw_group_name, [[\<]] .. word .. [[\>]], -1)
-	else
-		stcw_old_scol_pos = math.huge
-		stcw_old_ecol_pos = -1
-		w.stcw_match_id = nil
 	end
 end
 
