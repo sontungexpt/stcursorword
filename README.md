@@ -13,11 +13,23 @@ A minimal plugin for highlighting the word under the cursor.
 
 🎉 There are many plugins that do this, but none of them support disabling for certain filetypes. So, If I accidentally open a binary file such as .png file it gives me an error
 
-🛠️ Other plugins alway reset highlighting when the cursor moves, this plugin does not. It only highlights the word under the cursor when the cursor moves out of the word range
+🛠️ Other plugins always reset highlighting when the cursor moves, whereas this plugin does not. It only highlights the word under the cursor when the cursor moves out of the word range.
 
 🍕 Easily to disable and enable when needed.
 
-🚀 And a subjective reason is that I used to use the `nvim-cursorline` plugin before, but I don't use the cursorline feature so I created this plugin
+🚀 And a subjective reason is that I used to use the `nvim-cursorline` plugin before, but I don't use the cursorline feature. Another plugins i found that nvim-cursorword, it works quite similar to this plugin, but its setup method is not like the plugins I usually use. So this is the reason for this plugin.
+
+## Preview
+
+Nvim cursorline error when accidentally open a binary file
+
+![Nvim cursorline error](./docs/readme/compare1.png)
+
+stcursorword does not meet this error
+
+
+https://github.com/sontungexpt/stcursorword/assets/92097639/d00be822-dfcf-47e8-8e97-a2a6ae0b6abf
+
 
 ## Installation
 
