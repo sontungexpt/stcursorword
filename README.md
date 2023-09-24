@@ -25,7 +25,7 @@ A minimal plugin for highlighting the word under the cursor.
     -- lazy
     {
         "sontungexpt/stcursorword",
-        event = "ColorScheme",
+        event = "VeryLazy",
         config = true,
     },
 ```
