@@ -2,22 +2,24 @@
 
 A minimal plugin for highlighting the word under the cursor.
 
-- ❓ [Reason for creating](#reason)
+- ❓ [Reasons for creating](#reason)
 - 👀 [Installation](#installation)
 - 💻 [Configuration](#configuration)
 - 😆 [Usage](#usage)
 - 😁 [Contributing](#contributing)
 - ✌️ [License](#license)
 
-## Reason <a name = "reason"></a> for creating this plugin
+## Reasons <a name = "reason"></a> for creating this plugin
 
 🎉 There are many plugins that do this, but none of them support disabling for certain filetypes. So, If I accidentally open a binary file such as .png file it gives me an error
 
 🛠️ Other plugins always reset highlighting when the cursor moves, whereas this plugin does not. It only highlights the word under the cursor when the cursor moves out of the word range.
 
+For example, if the cursor is on the character `h` in the word `hello`, and you move the cursor to `e`, other plugins will remove the highlighting from the word `hello` and then highlight it again, even though the cursor is still on that word. Consequently, when you move to the `o`, it will undergo highlighting five times.
+
 🍕 Easily to disable and enable when needed.
 
-🚀 And a subjective reason is that I used to use the `nvim-cursorline` plugin before, but I don't use the cursorline feature. Another plugins i found that nvim-cursorword, it works quite similar to this plugin, but its setup method is not like the plugins I usually use. So this is the reason for this plugin.
+🚀 And a subjective reason is that I used to use the [nvim-cursorline](https://github.com/yamatsum/nvim-cursorline) plugin before, but I don't use the cursorline feature. Another plugins i found that [nvim-cursorword](https://github.com/xiyaowong/nvim-cursorword), it works quite similar to this plugin, but its setup method is not like the plugins I usually use. So this is the reason for this plugin.
 
 ## Preview
 
@@ -25,11 +27,9 @@ Nvim cursorline error when accidentally open a binary file
 
 ![Nvim cursorline error](./docs/readme/compare1.png)
 
-stcursorword does not meet this error
-
+stcursorword does not meet this error by adding pattern to the file_patterns options of the plugin
 
 https://github.com/sontungexpt/stcursorword/assets/92097639/d00be822-dfcf-47e8-8e97-a2a6ae0b6abf
-
 
 ## Installation
 
@@ -51,21 +51,28 @@ https://github.com/sontungexpt/stcursorword/assets/92097639/d00be822-dfcf-47e8-8
         min_word_length = 2, -- if cursorword length < min_word_length then not highlight
         excluded = {
             filetypes = {
-              "TelescopePrompt"
+                "TelescopePrompt",
             },
             buftypes = {
                 -- "nofile",
                 -- "terminal",
             },
-            file_patterns = { -- pattern to match with the path of the file
-              "%.png$",
+            file_patterns = { -- the pattern to match with the file path
+                "%.png$",
+                "%.jpg$",
+                "%.jpeg$",
+                "%.pdf$",
+                "%.zip$",
+                "%.tar$",
+                "%.mp3$",
+                "%.mp4$",
             },
         },
         highlight = {
             underline = true,
             fg = nil,
             bg = nil,
-        }
+        },
     })
 ```
 
