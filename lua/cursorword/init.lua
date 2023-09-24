@@ -18,6 +18,7 @@ local DEFAULT_OPTS = {
 	excluded = {
 		filetypes = {
 			"TelescopePrompt",
+			"NvimTree",
 		},
 		buftypes = {
 			-- "nofile",
@@ -30,6 +31,11 @@ local DEFAULT_OPTS = {
 			"%.pdf$",
 			"%.zip$",
 			"%.tar$",
+			"%.tar.gz$",
+			"%.tar.xz$",
+			"%.tar.bz2$",
+			"%.rar$",
+			"%.7z$",
 			"%.mp3$",
 			"%.mp4$",
 		},
@@ -107,15 +113,22 @@ end
 local setup_autocmd = function(user_opts)
 	matchadd(user_opts) -- match word on startup
 	local group = api.nvim_create_augroup(stcw_group_name, { clear = true })
-	autocmd({ "CursorMoved", "CursorMovedI" }, {
+	autocmd({ "CursorMoved", "CursorMovedI", "WinEnter" }, {
 		group = group,
 		callback = function()
-			if not is_disabled(user_opts) then matchadd(user_opts) end
+			-- new window, check if disabled or not only once
+			if w.stcw_cur_win_disabled == nil and is_disabled(user_opts) then
+				w.stcw_cur_win_disabled = true
+			end
+			if not w.stcw_cur_win_disabled then matchadd(user_opts) end
 		end,
 	})
 	autocmd("WinLeave", {
 		group = group,
-		callback = function() matchdelete() end,
+		callback = function()
+			matchdelete()
+			w.stcw_cur_win_disabled = nil
+		end,
 	})
 	g.stcw_enabled = true
 end
