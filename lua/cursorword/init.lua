@@ -17,19 +17,19 @@ local DEFAULT_OPTS = {
 	min_word_length = 2,
 	excluded = {
 		filetypes = {
-		  "TelescopePrompt",
-    },
+			"TelescopePrompt",
+		},
 		buftypes = {
 			-- "nofile",
 			-- "terminal",
 		},
 		file_patterns = {
-		  "%.png$",
-    },
+			"%.png$",
+		},
 	},
 	highlight = {
-	  underline = true,
-  }
+		underline = true,
+	},
 }
 
 local matchdelete = function()
@@ -46,7 +46,12 @@ local matchadd = function(user_opts)
 	local col = pos[2]
 
 	-- if cusor doesn't move out of the word, do nothing
-	if g.stcw_enabled and stcw_old_line_pos == pos[1] and col >= stcw_old_scol_pos and col < stcw_old_ecol_pos then
+	if
+		g.stcw_enabled
+		and stcw_old_line_pos == pos[1]
+		and col >= stcw_old_scol_pos
+		and col < stcw_old_ecol_pos
+	then
 		return
 	end
 	stcw_old_line_pos = pos[1]
@@ -60,7 +65,7 @@ local matchadd = function(user_opts)
 	local word = matches[1]
 
 	if word ~= "" then
-	  stcw_old_scol_pos = matches[2]
+		stcw_old_scol_pos = matches[2]
 		matches = fn.matchstrpos(line, [[^\w*]], col + 1)
 		word = word .. matches[1]
 		stcw_old_ecol_pos = matches[3]
@@ -93,35 +98,29 @@ local is_disabled = function(user_opts)
 end
 
 local setup_autocmd = function(user_opts)
-  matchadd(user_opts) -- match word on startup
-  local group = api.nvim_create_augroup(stcw_group_name, { clear = true })
-  autocmd({ "CursorMoved", "CursorMovedI" }, {
-    group = group,
-    callback = function()
-      if not is_disabled(user_opts) then
-        matchadd(user_opts)
-      end
-    end,
-  })
-  autocmd("WinLeave",{
-    group = group,
-    callback = function()
-      matchdelete()
-    end,
-  })
+	matchadd(user_opts) -- match word on startup
+	local group = api.nvim_create_augroup(stcw_group_name, { clear = true })
+	autocmd({ "CursorMoved", "CursorMovedI" }, {
+		group = group,
+		callback = function()
+			if not is_disabled(user_opts) then matchadd(user_opts) end
+		end,
+	})
+	autocmd("WinLeave", {
+		group = group,
+		callback = function() matchdelete() end,
+	})
 	g.stcw_enabled = true
 end
 
 local setup_command = function(user_opts)
-	new_cmd("CursorwordEnable", function()
-	  setup_autocmd(user_opts)
-  end, { nargs = 0 })
+	new_cmd("CursorwordEnable", function() setup_autocmd(user_opts) end, { nargs = 0 })
 
-  new_cmd("CursorwordDisable", function()
-    matchdelete()
-    api.nvim_del_augroup_by_name(stcw_group_name)
-    g.stcw_enabled = false
-  end, { nargs = 0 })
+	new_cmd("CursorwordDisable", function()
+		matchdelete()
+		api.nvim_del_augroup_by_name(stcw_group_name)
+		g.stcw_enabled = false
+	end, { nargs = 0 })
 end
 
 M.setup = function(opts)
