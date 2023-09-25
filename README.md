@@ -1,6 +1,6 @@
 ## STCursorword
 
-A minimal plugin for highlighting the word under the cursor.
+A minimal and fast cursorword highlighting plugin for neovim written in lua
 
 - ❓ [Reasons for creating](#reason)
 - 👀 [Installation](#installation)
@@ -25,9 +25,9 @@ For example, if the cursor is on the character `h` in the word `hello`, and you 
 
 Nvim cursorline error when accidentally open a binary file
 
-![Nvim cursorline error](./docs/readme/compare1.png)
+![nvim-cursorline error](./docs/readme/compare1.png)
 
-stcursorword does not meet this error by adding pattern to the file_patterns options of the plugin
+This plugin does not meet this error by adding pattern to the file_patterns options of the plugin
 
 https://github.com/sontungexpt/stcursorword/assets/92097639/d00be822-dfcf-47e8-8e97-a2a6ae0b6abf
 

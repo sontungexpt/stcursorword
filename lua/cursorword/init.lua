@@ -86,7 +86,6 @@ local matchadd = function(user_opts)
 
 		w.stcw_match_id =
 			fn.matchadd(stcw_group_name, [[\(\<\|\W\|\s\)\zs]] .. word .. [[\ze\(\s\|[^[:alnum:]_]\|$\)]], -1)
-		-- w.stcw_match_id = fn.matchadd(stcw_group_name, [[\<]] .. word .. [[\>]], -1)
 	end
 end
 
