@@ -114,6 +114,11 @@ local setup_autocmd = function(user_opts)
 	matchadd(user_opts) -- match word on startup
 	local group = api.nvim_create_augroup(stcw_group_name, { clear = true })
 
+	autocmd({ "ColorScheme" }, { -- make sure highlight is set after ColorScheme
+		group = group,
+		callback = function() api.nvim_set_hl(0, stcw_group_name, user_opts.highlight) end,
+	})
+
 	autocmd({ "CursorMoved", "CursorMovedI", "BufEnter" }, {
 		group = group,
 		callback = function()
