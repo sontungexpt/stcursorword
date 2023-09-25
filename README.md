@@ -1,6 +1,6 @@
 ## STCursorword
 
-A minimal and fast cursorword highlighting plugin for neovim written in lua
+A concise, precise, and high-performance cursor word highlighting plugin for Neovim, implemented in Lua.
 
 - ❓ [Reasons for creating](#reason)
 - 👀 [Installation](#installation)
