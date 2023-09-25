@@ -84,7 +84,8 @@ local matchadd = function(user_opts)
 
 		if #word < user_opts.min_word_length or #word > user_opts.max_word_length then return end
 
-		w.stcw_match_id = fn.matchadd(stcw_group_name, [[\<]] .. word .. [[\>]], -1)
+		w.stcw_match_id = fn.matchadd(stcw_group_name, [[\<]] .. word .. [[\ze\(\s\|[^[:alnum:]_]\)]], -1)
+		-- w.stcw_match_id = fn.matchadd(stcw_group_name, [[\<]] .. word .. [[\>]], -1)
 	end
 end
 
