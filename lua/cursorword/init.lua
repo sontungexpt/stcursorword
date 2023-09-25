@@ -18,7 +18,6 @@ local DEFAULT_OPTS = {
 	excluded = {
 		filetypes = {
 			"TelescopePrompt",
-			"NvimTree",
 		},
 		buftypes = {
 			-- "nofile",
@@ -113,21 +112,20 @@ end
 local setup_autocmd = function(user_opts)
 	matchadd(user_opts) -- match word on startup
 	local group = api.nvim_create_augroup(stcw_group_name, { clear = true })
-	autocmd({ "CursorMoved", "CursorMovedI", "WinEnter" }, {
+
+	autocmd({ "CursorMoved", "CursorMovedI", "BufEnter" }, {
 		group = group,
 		callback = function()
-			-- new window, check if disabled or not only once
-			if w.stcw_cur_win_disabled == nil and is_disabled(user_opts) then
-				w.stcw_cur_win_disabled = true
-			end
-			if not w.stcw_cur_win_disabled then matchadd(user_opts) end
+			if w.stcw_disabled == nil and is_disabled(user_opts) then w.stcw_disabled = true end
+			if not w.stcw_disabled then matchadd(user_opts) end
 		end,
 	})
-	autocmd("WinLeave", {
+
+	autocmd({ "BufLeave" }, {
 		group = group,
 		callback = function()
 			matchdelete()
-			w.stcw_cur_win_disabled = nil
+			w.stcw_disabled = nil
 		end,
 	})
 	g.stcw_enabled = true
