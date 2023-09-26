@@ -4,6 +4,7 @@ local w = vim.w
 local g = vim.g
 local new_cmd = api.nvim_create_user_command
 local autocmd = api.nvim_create_autocmd
+local hl = api.nvim_set_hl
 
 local stcw_group_name = "STCursorword"
 local stcw_old_line_pos = -1 -- old line where the word was found
@@ -111,19 +112,39 @@ local is_disabled = function(user_opts)
 end
 
 local setup_autocmd = function(user_opts)
-	matchadd(user_opts) -- match word on startup
+	hl(0, stcw_group_name, user_opts.highlight) -- make sure highlight option is set when the plugin is loaded or
 	local group = api.nvim_create_augroup(stcw_group_name, { clear = true })
+
+	local check_and_matchadd = function()
+		w.stcw_disabled = (w.stcw_disabled == nil and is_disabled(user_opts)) and true or false
+		if not w.stcw_disabled then matchadd(user_opts) end
+	end
+
+	check_and_matchadd() -- initial match when the plugin is loaded
 
 	autocmd({ "ColorScheme" }, { -- make sure highlight is set after ColorScheme
 		group = group,
-		callback = function() api.nvim_set_hl(0, stcw_group_name, user_opts.highlight) end,
+		callback = function() hl(0, stcw_group_name, user_opts.highlight) end,
 	})
 
-	autocmd({ "CursorMoved", "CursorMovedI", "BufEnter" }, {
+	local skip_cursor_moved = false -- skip the first CursorMoved event after BufEnter
+
+	autocmd({ "BufEnter" }, {
 		group = group,
 		callback = function()
-			if w.stcw_disabled == nil and is_disabled(user_opts) then w.stcw_disabled = true end
-			if not w.stcw_disabled then matchadd(user_opts) end
+			skip_cursor_moved = true
+			check_and_matchadd()
+		end,
+	})
+
+	autocmd({ "CursorMoved", "CursorMovedI" }, {
+		group = group,
+		callback = function()
+			if skip_cursor_moved then
+				skip_cursor_moved = false
+				return
+			end
+			check_and_matchadd()
 		end,
 	})
 
@@ -149,7 +170,6 @@ end
 
 M.setup = function(opts)
 	local user_opts = vim.tbl_deep_extend("force", DEFAULT_OPTS, opts or {})
-	api.nvim_set_hl(0, stcw_group_name, user_opts.highlight)
 	setup_command(user_opts)
 	setup_autocmd(user_opts)
 end
