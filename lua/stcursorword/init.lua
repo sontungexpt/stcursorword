@@ -6,7 +6,7 @@ local new_cmd = api.nvim_create_user_command
 local autocmd = api.nvim_create_autocmd
 local hl = api.nvim_set_hl
 
-local stcw_group_name = "STCursorword"
+local stcw_group_name = "STCursorWord"
 local stcw_old_line_pos = -1 -- old line where the word was found
 local stcw_old_scol_pos = math.huge -- old start column position of the word found
 local stcw_old_ecol_pos = -1 -- old end column position of the word found
@@ -112,17 +112,19 @@ local is_disabled = function(user_opts)
 end
 
 local setup_autocmd = function(user_opts)
-	hl(0, stcw_group_name, user_opts.highlight) -- make sure highlight option is set when the plugin is loaded or
+	hl(0, stcw_group_name, user_opts.highlight) -- make sure highlight option is set when the plugin is loaded or reloaded
 	local group = api.nvim_create_augroup(stcw_group_name, { clear = true })
 
+	local is_buf_disabled = nil -- nil means this is the first time entering the buffer
+
 	local check_and_matchadd = function()
-		w.stcw_disabled = (w.stcw_disabled == nil and is_disabled(user_opts)) and true or false
-		if not w.stcw_disabled then matchadd(user_opts) end
+		is_buf_disabled = (is_buf_disabled == nil and is_disabled(user_opts)) and true or false
+		if not is_buf_disabled then matchadd(user_opts) end
 	end
 
 	check_and_matchadd() -- initial match when the plugin is loaded
 
-	autocmd({ "ColorScheme" }, { -- make sure highlight is set after ColorScheme
+	autocmd({ "ColorScheme" }, {
 		group = group,
 		callback = function() hl(0, stcw_group_name, user_opts.highlight) end,
 	})
@@ -152,7 +154,7 @@ local setup_autocmd = function(user_opts)
 		group = group,
 		callback = function()
 			matchdelete()
-			w.stcw_disabled = nil
+			is_buf_disabled = nil
 		end,
 	})
 	g.stcw_enabled = true
