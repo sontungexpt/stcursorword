@@ -55,31 +55,32 @@ local matchdelete = function()
 end
 
 local matchadd = function(user_opts)
-	local pos = api.nvim_win_get_cursor(0)
-	local col = pos[2]
+	local current_pos = api.nvim_win_get_cursor(0)
+	local curr_col_pos = current_pos[2]
+	local curr_line_pos = current_pos[1]
 
 	-- if cusor doesn't move out of the word, do nothing
 	if
 		g.stcw_enabled
-		and stcw_old_line_pos == pos[1]
-		and col >= stcw_old_scol_pos
-		and col < stcw_old_ecol_pos
+		and stcw_old_line_pos == curr_line_pos
+		and curr_col_pos >= stcw_old_scol_pos
+		and curr_col_pos < stcw_old_ecol_pos
 	then
 		return
 	end
-	stcw_old_line_pos = pos[1]
+	stcw_old_line_pos = curr_line_pos
 
 	-- clear old match
 	matchdelete()
 
 	local line = api.nvim_get_current_line()
 
-	local matches = fn.matchstrpos(line:sub(1, col + 1), [[\w*$]])
+	local matches = fn.matchstrpos(line:sub(1, curr_col_pos + 1), [[\w*$]])
 	local word = matches[1]
 
 	if word ~= "" then
 		stcw_old_scol_pos = matches[2]
-		matches = fn.matchstrpos(line, [[^\w*]], col + 1)
+		matches = fn.matchstrpos(line, [[^\w*]], curr_col_pos + 1)
 		word = word .. matches[1]
 		stcw_old_ecol_pos = matches[3]
 
@@ -97,10 +98,12 @@ local matches_file_patterns = function(file_name, file_patterns)
 	return false
 end
 
-local is_disabled = function(user_opts)
-	local buftype = api.nvim_buf_get_option(0, "buftype")
-	local filetype = api.nvim_buf_get_option(0, "filetype")
-	local file_name = api.nvim_buf_get_name(0)
+local is_disabled = function(user_opts, bufnr)
+	bufnr = bufnr or 0
+	local buftype = api.nvim_buf_get_option(bufnr, "buftype")
+	local filetype = api.nvim_buf_get_option(bufnr, "filetype")
+	local file_name = api.nvim_buf_get_name(bufnr)
+
 	if
 		vim.tbl_contains(user_opts.excluded.buftypes, buftype)
 		or vim.tbl_contains(user_opts.excluded.filetypes, filetype)
@@ -112,51 +115,56 @@ local is_disabled = function(user_opts)
 end
 
 local setup_autocmd = function(user_opts)
-	hl(0, stcw_group_name, user_opts.highlight) -- make sure highlight option is set when the plugin is loaded or reloaded
+	-- initial when plugin is loaded
+	hl(0, stcw_group_name, user_opts.highlight)
 	local group = api.nvim_create_augroup(stcw_group_name, { clear = true })
+	local is_buf_disabled = is_disabled(user_opts)
 
-	local is_buf_disabled = nil -- nil means this is the first time entering the buffer
+	if not is_buf_disabled then matchadd(user_opts) end -- initial match
 
-	local check_and_matchadd = function()
-		is_buf_disabled = (is_buf_disabled == nil and is_disabled(user_opts)) and true or false
-		if not is_buf_disabled then matchadd(user_opts) end
-	end
-
-	check_and_matchadd() -- initial match when the plugin is loaded
-
+	-- update highlight when color scheme is changed
 	autocmd({ "ColorScheme" }, {
 		group = group,
 		callback = function() hl(0, stcw_group_name, user_opts.highlight) end,
 	})
 
-	local skip_cursor_moved = false -- skip the first CursorMoved event after BufEnter
+	local skip_cursor_moved = false
 
 	autocmd({ "BufEnter" }, {
 		group = group,
-		callback = function()
+		callback = function(params)
 			skip_cursor_moved = true
-			check_and_matchadd()
+			is_buf_disabled = is_disabled(user_opts, params.buf)
+
+			-- wait for 5ms to make sure the buffer is loaded completely to avoid error when get current line
+			-- if the buffer is not loaded completely, the current line will be 0
+			vim.defer_fn(function()
+				if is_buf_disabled then
+					matchdelete()
+				else
+					matchadd(user_opts)
+				end
+			end, 5)
 		end,
 	})
 
 	autocmd({ "CursorMoved", "CursorMovedI" }, {
 		group = group,
 		callback = function()
+			-- only call if BufEnter is not called to avoid duplicate match
 			if skip_cursor_moved then
 				skip_cursor_moved = false
 				return
 			end
-			check_and_matchadd()
+			if not is_buf_disabled then matchadd(user_opts) end
 		end,
 	})
 
-	autocmd({ "BufLeave" }, {
+	autocmd({ "WinLeave" }, {
 		group = group,
-		callback = function()
-			matchdelete()
-			is_buf_disabled = nil
-		end,
+		callback = function() matchdelete() end,
 	})
+
 	g.stcw_enabled = true
 end
 
