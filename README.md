@@ -13,7 +13,7 @@ A concise, precise, and high-performance cursor word highlighting plugin for Neo
 
 🎉 There are many plugins that do this, but none of them support disabling for certain filetypes. So, If I accidentally open a binary file such as .png file it gives me an error
 
-🛠️ Other plugins always reset highlighting when the cursor moves, whereas this plugin does not. It only highlights the word under the cursor when the cursor moves out of the word range.
+🛠️ Other plugins always reset highlighting when the cursor moves, whereas this plugin does not. It only resets the highlighting when the cursor moves to a new word.
 
 For example, if the cursor is on the character `h` in the word `hello`, and you move the cursor to `e`, other plugins will remove the highlighting from the word `hello` and then highlight it again, even though the cursor is still on that word. Consequently, when you move to the `o`, it will undergo highlighting five times.
 
