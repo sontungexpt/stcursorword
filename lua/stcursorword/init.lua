@@ -84,9 +84,7 @@ local matchadd = function(user_opts)
 		word = word .. matches[1]
 		stcw_old_ecol_pos = matches[3]
 
-		if #word < user_opts.min_word_length or #word > user_opts.max_word_length then
-			return
-		end
+		if #word < user_opts.min_word_length or #word > user_opts.max_word_length then return end
 
 		w.stcw_match_id =
 			fn.matchadd(stcw_group_name, [[\(\<\|\W\|\s\)\zs]] .. word .. [[\ze\(\s\|[^[:alnum:]_]\|$\)]], -1)
@@ -95,9 +93,7 @@ end
 
 local matches_file_patterns = function(file_name, file_patterns)
 	for _, pattern in ipairs(file_patterns) do
-		if file_name:match(pattern) then
-			return true
-		end
+		if file_name:match(pattern) then return true end
 	end
 	return false
 end
@@ -124,16 +120,12 @@ local setup_autocmd = function(user_opts)
 	local group = api.nvim_create_augroup(stcw_group_name, { clear = true })
 	local is_buf_disabled = is_disabled(user_opts)
 
-	if not is_buf_disabled then
-		matchadd(user_opts)
-	end -- initial match
+	if not is_buf_disabled then matchadd(user_opts) end -- initial match
 
 	-- update highlight when color scheme is changed
 	autocmd({ "ColorScheme" }, {
 		group = group,
-		callback = function()
-			hl(0, stcw_group_name, user_opts.highlight)
-		end,
+		callback = function() hl(0, stcw_group_name, user_opts.highlight) end,
 	})
 
 	local skip_cursormoved = false
@@ -141,20 +133,20 @@ local setup_autocmd = function(user_opts)
 	autocmd({ "BufEnter" }, {
 		group = group,
 		callback = function(params)
-			-- wait for 5ms to make sure the buffer is loaded completely to avoid error
+			-- wait for 8ms to make sure the buffer is loaded completely to avoid error
 			-- when the buffer is not loaded completely
 			-- the current line is 0
 			-- the buftype is nil
 			-- the filetype is nil
 			skip_cursormoved = true
 			vim.defer_fn(function()
-				is_buf_disabled = is_disabled(user_opts, params.buf)
+				is_buf_disabled = is_disabled(user_opts)
 				if is_buf_disabled then
 					matchdelete()
 				else
 					matchadd(user_opts)
 				end
-			end, 5)
+			end, 8)
 		end,
 	})
 
@@ -165,27 +157,20 @@ local setup_autocmd = function(user_opts)
 				skip_cursormoved = false
 				return
 			end
-			if not is_buf_disabled then
-				matchadd(user_opts)
-			end
+			if not is_buf_disabled then matchadd(user_opts) end
 		end,
 	})
 
 	autocmd({ "WinLeave" }, {
 		group = group,
-		callback = function()
-			matchdelete()
-			skip_cursormoved = true -- next cursormoved will be skipped because it is the first time the buffer is loaded
-		end,
+		callback = function() matchdelete() end,
 	})
 
 	g.stcw_enabled = true
 end
 
 local setup_command = function(user_opts)
-	new_cmd("CursorwordEnable", function()
-		setup_autocmd(user_opts)
-	end, { nargs = 0 })
+	new_cmd("CursorwordEnable", function() setup_autocmd(user_opts) end, { nargs = 0 })
 
 	new_cmd("CursorwordDisable", function()
 		matchdelete()
