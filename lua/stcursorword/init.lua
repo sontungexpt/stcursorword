@@ -6,7 +6,7 @@ local new_cmd = api.nvim_create_user_command
 local autocmd = api.nvim_create_autocmd
 local hl = api.nvim_set_hl
 
-local stcw_group_name = "STCursorWord"
+local STCW_GROUP_NAME = "STCursorWord"
 local stcw_old_line_pos = -1 -- old line where the word was found
 local stcw_old_scol_pos = math.huge -- old start column position of the word found
 local stcw_old_ecol_pos = -1 -- old end column position of the word found
@@ -87,7 +87,7 @@ local matchadd = function(user_opts)
 		if #word < user_opts.min_word_length or #word > user_opts.max_word_length then return end
 
 		w.stcw_match_id =
-			fn.matchadd(stcw_group_name, [[\(\<\|\W\|\s\)\zs]] .. word .. [[\ze\(\s\|[^[:alnum:]_]\|$\)]], -1)
+			fn.matchadd(STCW_GROUP_NAME, [[\(\<\|\W\|\s\)\zs]] .. word .. [[\ze\(\s\|[^[:alnum:]_]\|$\)]], -1)
 	end
 end
 
@@ -114,10 +114,10 @@ local is_disabled = function(user_opts, bufnr)
 	return false
 end
 
-local setup_autocmd = function(user_opts)
+local enable = function(user_opts)
 	-- initial when plugin is loaded
-	hl(0, stcw_group_name, user_opts.highlight)
-	local group = api.nvim_create_augroup(stcw_group_name, { clear = true })
+	hl(0, STCW_GROUP_NAME, user_opts.highlight)
+	local group = api.nvim_create_augroup(STCW_GROUP_NAME, { clear = true })
 	local is_buf_disabled = is_disabled(user_opts)
 
 	if not is_buf_disabled then matchadd(user_opts) end -- initial match
@@ -125,7 +125,7 @@ local setup_autocmd = function(user_opts)
 	-- update highlight when color scheme is changed
 	autocmd({ "ColorScheme" }, {
 		group = group,
-		callback = function() hl(0, stcw_group_name, user_opts.highlight) end,
+		callback = function() hl(0, STCW_GROUP_NAME, user_opts.highlight) end,
 	})
 
 	local skip_cursormoved = false
@@ -133,11 +133,11 @@ local setup_autocmd = function(user_opts)
 	autocmd({ "BufEnter" }, {
 		group = group,
 		callback = function(params)
-			-- wait for 8ms to make sure the buffer is loaded completely to avoid error
-			-- when the buffer is not loaded completely
-			-- the current line is 0
-			-- the buftype is nil
-			-- the filetype is nil
+			-- Wait for 8ms to ensure the buffer is fully loaded to avoid errors.
+			-- If the buffer is not fully loaded:
+			-- - The current line is 0.
+			-- - The buffer type (buftype) is nil.
+			-- - The file type (filetype) is nil.
 			skip_cursormoved = true
 			vim.defer_fn(function()
 				is_buf_disabled = is_disabled(user_opts)
@@ -163,26 +163,30 @@ local setup_autocmd = function(user_opts)
 
 	autocmd({ "WinLeave" }, {
 		group = group,
-		callback = function() matchdelete() end,
+		callback = function()
+			matchdelete()
+			skip_cursormoved = true
+		end,
 	})
 
 	g.stcw_enabled = true
 end
 
-local setup_command = function(user_opts)
-	new_cmd("CursorwordEnable", function() setup_autocmd(user_opts) end, { nargs = 0 })
+local disable = function()
+	matchdelete()
+	api.nvim_del_augroup_by_name(STCW_GROUP_NAME)
+	g.stcw_enabled = false
+end
 
-	new_cmd("CursorwordDisable", function()
-		matchdelete()
-		api.nvim_del_augroup_by_name(stcw_group_name)
-		g.stcw_enabled = false
-	end, { nargs = 0 })
+local setup_command = function(user_opts)
+	new_cmd("CursorwordEnable", function() enable(user_opts) end, { nargs = 0 })
+	new_cmd("CursorwordDisable", function() disable() end, { nargs = 0 })
 end
 
 M.setup = function(opts)
 	local user_opts = vim.tbl_deep_extend("force", DEFAULT_OPTS, opts or {})
 	setup_command(user_opts)
-	setup_autocmd(user_opts)
+	enable(user_opts)
 end
 
 return M
