@@ -25,19 +25,19 @@ local DEFAULT_OPTS = {
 			-- "nofile",
 		},
 		file_patterns = {
-			"%.png$",
-			"%.jpg$",
-			"%.jpeg$",
-			"%.pdf$",
-			"%.zip$",
-			"%.tar$",
-			"%.tar%.gz$",
-			"%.tar%.xz$",
-			"%.tar%.bz2$",
-			"%.rar$",
-			"%.7z$",
-			"%.mp3$",
-			"%.mp4$",
+			-- "%.png$",
+			-- "%.jpg$",
+			-- "%.jpeg$",
+			-- "%.pdf$",
+			-- "%.zip$",
+			-- "%.tar$",
+			-- "%.tar%.gz$",
+			-- "%.tar%.xz$",
+			-- "%.tar%.bz2$",
+			-- "%.rar$",
+			-- "%.7z$",
+			-- "%.mp3$",
+			-- "%.mp4$",
 		},
 	},
 	highlight = {
@@ -74,6 +74,9 @@ local matchadd = function(user_opts)
 	matchdelete()
 
 	local line = api.nvim_get_current_line()
+
+	-- Fixes vim:E976 error when cursor is on a blob
+	if fn.type(line) == vim.v.t_blob then return end
 
 	local matches = fn.matchstrpos(line:sub(1, curr_col_pos + 1), [[\w*$]])
 	local word = matches[1]
@@ -163,10 +166,7 @@ local enable = function(user_opts)
 
 	autocmd({ "WinLeave" }, {
 		group = group,
-		callback = function()
-			matchdelete()
-			skip_cursormoved = true
-		end,
+		callback = function() matchdelete() end,
 	})
 
 	g.stcw_enabled = true
