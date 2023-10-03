@@ -27,7 +27,7 @@ Nvim cursorline error when accidentally open a binary file
 
 ![nvim-cursorline error](./docs/readme/compare1.png)
 
-This plugin does not meet this error by adding pattern to the file_patterns options of the plugin
+This plugin fixed this error.
 
 https://github.com/sontungexpt/stcursorword/assets/92097639/d00be822-dfcf-47e8-8e97-a2a6ae0b6abf
 
@@ -58,19 +58,19 @@ https://github.com/sontungexpt/stcursorword/assets/92097639/d00be822-dfcf-47e8-8
                 -- "terminal",
             },
             file_patterns = { -- the pattern to match with the file path
-                "%.png$",
-                "%.jpg$",
-                "%.jpeg$",
-                "%.pdf$",
-                "%.zip$",
-                "%.tar$",
-                "%.tar%.gz$",
-                "%.tar%.xz$",
-                "%.tar%.bz2$",
-                "%.rar$",
-                "%.7z$",
-                "%.mp3$",
-                "%.mp4$",
+                -- "%.png$",
+                -- "%.jpg$",
+                -- "%.jpeg$",
+                -- "%.pdf$",
+                -- "%.zip$",
+                -- "%.tar$",
+                -- "%.tar%.gz$",
+                -- "%.tar%.xz$",
+                -- "%.tar%.bz2$",
+                -- "%.rar$",
+                -- "%.7z$",
+                -- "%.mp3$",
+                -- "%.mp4$",
             },
         },
         highlight = {
