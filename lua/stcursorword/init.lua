@@ -133,9 +133,9 @@ local enable = function(user_opts)
 
 	local skip_cursormoved = false
 
-	autocmd({ "BufEnter" }, {
+	autocmd({ "BufEnter", "WinEnter" }, {
 		group = group,
-		callback = function(params)
+		callback = function()
 			-- Wait for 8ms to ensure the buffer is fully loaded to avoid errors.
 			-- If the buffer is not fully loaded:
 			-- - The current line is 0.
@@ -144,11 +144,7 @@ local enable = function(user_opts)
 			skip_cursormoved = true
 			vim.defer_fn(function()
 				is_buf_disabled = is_disabled(user_opts)
-				if is_buf_disabled then
-					matchdelete()
-				else
-					matchadd(user_opts)
-				end
+				if not is_buf_disabled then matchadd(user_opts) end
 			end, 8)
 		end,
 	})
@@ -164,7 +160,7 @@ local enable = function(user_opts)
 		end,
 	})
 
-	autocmd({ "WinLeave" }, {
+	autocmd({ "BufLeave", "WinLeave" }, {
 		group = group,
 		callback = function() matchdelete() end,
 	})
