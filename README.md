@@ -23,6 +23,14 @@ For example, if the cursor is on the character `h` in the word `hello`, and you 
 
 ## Preview
 
+
+
+https://github.com/sontungexpt/stcursorword/assets/92097639/2beb58cf-d6f9-44f9-979d-dea280a52b4d
+
+
+
+Compare with nvim cursorline
+
 Nvim cursorline error when accidentally open a binary file
 
 ![nvim-cursorline error](./docs/readme/compare1.png)
