@@ -104,14 +104,11 @@ end
 
 local is_disabled = function(user_opts, bufnr)
 	bufnr = bufnr or 0
-	local buftype = api.nvim_buf_get_option(bufnr, "buftype")
-	local filetype = api.nvim_buf_get_option(bufnr, "filetype")
-	local file_name = api.nvim_buf_get_name(bufnr)
 
 	if
-		vim.tbl_contains(user_opts.excluded.buftypes, buftype)
-		or vim.tbl_contains(user_opts.excluded.filetypes, filetype)
-		or matches_file_patterns(file_name, user_opts.excluded.file_patterns)
+		vim.tbl_contains(user_opts.excluded.buftypes, api.nvim_buf_get_option(bufnr, "buftype"))
+		or vim.tbl_contains(user_opts.excluded.filetypes, api.nvim_buf_get_option(bufnr, "filetype"))
+		or matches_file_patterns(api.nvim_buf_get_name(bufnr), user_opts.excluded.file_patterns)
 	then
 		return true
 	end
