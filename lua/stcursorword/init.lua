@@ -1,31 +1,33 @@
 local vim = vim
-local api = vim.api
-local fn = vim.fn
 local w = vim.w
-local g = vim.g
-local new_cmd = api.nvim_create_user_command
-local autocmd = api.nvim_create_autocmd
+local fn = vim.fn
+local api = vim.api
 local hl = api.nvim_set_hl
+local autocmd = api.nvim_create_autocmd
+local matchstrpos = fn.matchstrpos
+local matchadd = fn.matchadd
+local get_cursor = api.nvim_win_get_cursor
+local get_line = api.nvim_get_current_line
 
-local STCW_GROUP_NAME = "STCursorWord"
-local stcw_old_line_pos = -1 -- old line where the word was found
-local stcw_old_scol_pos = math.huge -- old start column position of the word found
-local stcw_old_ecol_pos = -1 -- old end column position of the word found
+local PLUG_NAME = "stcursorword"
+local enabled = false
+local prev_line = -1 -- The previous line number where the cursor was found
+local prev_start_column = math.huge -- The previous start column position of the word found
+local prev_end_column = -1 -- The previous end column position of the word found
 
 local M = {}
 
-local DEFAULT_OPTS = {
+local default_configs = {
 	max_word_length = 100,
 	min_word_length = 2,
 	excluded = {
-		filetypes = {
-			"TelescopePrompt",
-		},
+		filetypes = {},
 		buftypes = {
+			"prompt",
 			-- "terminal",
 			-- "nofile",
 		},
-		file_patterns = {
+		patterns = {
 			-- "%.png$",
 			-- "%.jpg$",
 			-- "%.jpeg$",
@@ -47,52 +49,59 @@ local DEFAULT_OPTS = {
 }
 
 local matchdelete = function()
-	if w.stcw_match_id ~= nil then
-		fn.matchdelete(w.stcw_match_id)
-		w.stcw_match_id = nil
-		stcw_old_scol_pos = math.huge
-		stcw_old_ecol_pos = -1
+	if w.stcursorword ~= nil then
+		fn.matchdelete(w.stcursorword)
+		w.stcursorword = nil
+		prev_start_column = math.huge
+		prev_end_column = -1
 	end
 end
 
-local matchadd = function(user_opts)
-	local current_pos = api.nvim_win_get_cursor(0)
-	local curr_col_pos = current_pos[2]
-	local curr_line_pos = current_pos[1]
+local highlight_same = function(configs)
+	local cursor_pos = get_cursor(0)
+	local cursor_column = cursor_pos[2]
+	local cursor_line = cursor_pos[1]
 
 	-- if cusor doesn't move out of the word, do nothing
 	if
-		g.stcw_enabled
-		and stcw_old_line_pos == curr_line_pos
-		and curr_col_pos >= stcw_old_scol_pos
-		and curr_col_pos < stcw_old_ecol_pos
+		enabled
+		and prev_line == cursor_line
+		and cursor_column >= prev_start_column
+		and cursor_column < prev_end_column
 	then
 		return
 	end
-	stcw_old_line_pos = curr_line_pos
+	prev_line = cursor_line
 
 	-- clear old match
 	matchdelete()
 
-	local line = api.nvim_get_current_line()
+	local line = get_line()
 
 	-- Fixes vim:E976 error when cursor is on a blob
 	if fn.type(line) == vim.v.t_blob then return end
 
-	local matches = fn.matchstrpos(line:sub(1, curr_col_pos + 1), [[\w*$]])
-	local word = matches[1]
+	local matches = matchstrpos(line:sub(1, cursor_column + 1), [[\w*$]])
+	local word = matches[1] -- left part of the word
 
 	if word ~= "" then
-		stcw_old_scol_pos = matches[2]
-		matches = fn.matchstrpos(line, [[^\w*]], curr_col_pos + 1)
-		word = word .. matches[1]
-		stcw_old_ecol_pos = matches[3]
+		matches = matchstrpos(line, [[^\w*]], cursor_column + 1)
+		word = word .. matches[1] -- combine with right part of the word
+		prev_start_column = matches[2]
+		prev_end_column = matches[3]
 
-		if #word < user_opts.min_word_length or #word > user_opts.max_word_length then return end
+		if #word < configs.min_word_length or #word > configs.max_word_length then return end
 
-		w.stcw_match_id =
-			fn.matchadd(STCW_GROUP_NAME, [[\(\<\|\W\|\s\)\zs]] .. word .. [[\ze\(\s\|[^[:alnum:]_]\|$\)]], -1)
+		w.stcursorword =
+			matchadd(PLUG_NAME, [[\(\<\|\W\|\s\)\zs]] .. word .. [[\ze\(\s\|[^[:alnum:]_]\|$\)]], -1)
 	end
+end
+
+local arr_contains = function(tbl, value)
+	for _, v in ipairs(tbl) do
+		if v == value then return true end
+	end
+	return false
 end
 
 local matches_file_patterns = function(file_name, file_patterns)
@@ -102,31 +111,23 @@ local matches_file_patterns = function(file_name, file_patterns)
 	return false
 end
 
-local is_disabled = function(user_opts, bufnr)
-	bufnr = bufnr or 0
-
-	if
-		vim.tbl_contains(user_opts.excluded.buftypes, api.nvim_buf_get_option(bufnr, "buftype"))
-		or vim.tbl_contains(user_opts.excluded.filetypes, api.nvim_buf_get_option(bufnr, "filetype"))
-		or matches_file_patterns(api.nvim_buf_get_name(bufnr), user_opts.excluded.file_patterns)
-	then
-		return true
-	end
-	return false
+local is_disabled = function(excluded, bufnr)
+	return arr_contains(excluded.buftypes, api.nvim_buf_get_option(bufnr or 0, "buftype"))
+		or arr_contains(excluded.filetypes, api.nvim_buf_get_option(bufnr or 0, "filetype"))
+		or matches_file_patterns(api.nvim_buf_get_name(bufnr or 0), excluded.patterns)
 end
 
-local enable = function(user_opts)
+local enable = function(configs)
 	-- initial when plugin is loaded
-	hl(0, STCW_GROUP_NAME, user_opts.highlight)
-	local group = api.nvim_create_augroup(STCW_GROUP_NAME, { clear = true })
-	local is_buf_disabled = is_disabled(user_opts)
+	hl(0, PLUG_NAME, configs.highlight)
+	local group = api.nvim_create_augroup(PLUG_NAME, { clear = true })
 
-	if not is_buf_disabled then matchadd(user_opts) end -- initial match
+	local disabled_buffer = is_disabled(configs.excluded, 0)
+	if not disabled_buffer then highlight_same(configs) end -- initial match
 
-	-- update highlight when color scheme is changed
-	autocmd({ "ColorScheme" }, {
+	autocmd("ColorScheme", {
 		group = group,
-		callback = function() hl(0, STCW_GROUP_NAME, user_opts.highlight) end,
+		callback = function() hl(0, PLUG_NAME, configs.highlight) end,
 	})
 
 	local skip_cursormoved = false
@@ -141,8 +142,8 @@ local enable = function(user_opts)
 			-- - The file type (filetype) is nil.
 			skip_cursormoved = true
 			vim.defer_fn(function()
-				is_buf_disabled = is_disabled(user_opts)
-				if not is_buf_disabled then matchadd(user_opts) end
+				disabled_buffer = is_disabled(configs.excluded, 0)
+				if not disabled_buffer then highlight_same(configs) end
 			end, 8)
 		end,
 	})
@@ -152,35 +153,52 @@ local enable = function(user_opts)
 		callback = function()
 			if skip_cursormoved then
 				skip_cursormoved = false
-				return
+			elseif not disabled_buffer then
+				highlight_same(configs)
 			end
-			if not is_buf_disabled then matchadd(user_opts) end
 		end,
 	})
 
 	autocmd({ "BufLeave", "WinLeave" }, {
 		group = group,
-		callback = function() matchdelete() end,
+		callback = matchdelete,
 	})
 
-	g.stcw_enabled = true
+	enabled = true
 end
 
 local disable = function()
 	matchdelete()
-	api.nvim_del_augroup_by_name(STCW_GROUP_NAME)
-	g.stcw_enabled = false
+	api.nvim_del_augroup_by_name(PLUG_NAME)
+	enabled = false
 end
 
-local setup_command = function(user_opts)
-	new_cmd("CursorwordEnable", function() enable(user_opts) end, { nargs = 0 })
-	new_cmd("CursorwordDisable", function() disable() end, { nargs = 0 })
+local setup_command = function(configs)
+	api.nvim_create_user_command("CursorwordEnable", function() enable(configs) end, { nargs = 0 })
+	api.nvim_create_user_command("CursorwordDisable", disable, { nargs = 0 })
 end
 
-M.setup = function(opts)
-	local user_opts = vim.tbl_deep_extend("force", DEFAULT_OPTS, opts or {})
-	setup_command(user_opts)
-	enable(user_opts)
+local function merge_config(default_opts, user_opts)
+	local default_options_type = type(default_opts)
+
+	if default_options_type == type(user_opts) then
+		if default_options_type == "table" and default_opts[1] == nil then
+			for k, v in pairs(user_opts) do
+				default_opts[k] = merge_config(default_opts[k], v)
+			end
+		else
+			default_opts = user_opts
+		end
+	elseif default_opts == nil then
+		default_opts = user_opts
+	end
+	return default_opts
+end
+
+M.setup = function(user_opts)
+	local opts = merge_config(default_configs, user_opts)
+	setup_command(opts)
+	enable(opts)
 end
 
 return M
