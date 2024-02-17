@@ -23,11 +23,7 @@ For example, if the cursor is on the character `h` in the word `hello`, and you 
 
 ## Preview
 
-
-
 https://github.com/sontungexpt/stcursorword/assets/92097639/2beb58cf-d6f9-44f9-979d-dea280a52b4d
-
-
 
 Compare with nvim cursorline
 
@@ -65,7 +61,7 @@ https://github.com/sontungexpt/stcursorword/assets/92097639/d00be822-dfcf-47e8-8
                 -- "nofile",
                 -- "terminal",
             },
-            file_patterns = { -- the pattern to match with the file path
+            patterns = { -- the pattern to match with the file path
                 -- "%.png$",
                 -- "%.jpg$",
                 -- "%.jpeg$",
