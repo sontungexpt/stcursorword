@@ -1,13 +1,12 @@
 local vim = vim
-local w = vim.w
-local fn = vim.fn
-local api = vim.api
-local hl = api.nvim_set_hl
-local autocmd = api.nvim_create_autocmd
-local matchstrpos = fn.matchstrpos
-local matchadd = fn.matchadd
-local get_cursor = api.nvim_win_get_cursor
-local get_line = api.nvim_get_current_line
+local w, fn, api = vim.w, vim.fn, vim.api
+local hl, autocmd, get_cursor, get_line, matchstrpos, matchadd =
+	api.nvim_set_hl,
+	api.nvim_create_autocmd,
+	api.nvim_win_get_cursor,
+	api.nvim_get_current_line,
+	fn.matchstrpos,
+	fn.matchadd
 
 local PLUG_NAME = "stcursorword"
 local enabled = false
@@ -173,7 +172,16 @@ local disable = function()
 	enabled = false
 end
 
+local toggle = function(configs)
+	if enabled then
+		disable()
+	else
+		enable(configs)
+	end
+end
+
 local setup_command = function(configs)
+	api.nvim_create_user_command("CursorwordToggle", function() toggle(configs) end, { nargs = 0 })
 	api.nvim_create_user_command("CursorwordEnable", function() enable(configs) end, { nargs = 0 })
 	api.nvim_create_user_command("CursorwordDisable", disable, { nargs = 0 })
 end
