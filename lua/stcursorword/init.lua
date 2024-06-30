@@ -111,8 +111,8 @@ local matches_file_patterns = function(file_name, file_patterns)
 end
 
 local is_disabled = function(excluded, bufnr)
-	return arr_contains(excluded.buftypes, api.nvim_buf_get_option(bufnr or 0, "buftype"))
-		or arr_contains(excluded.filetypes, api.nvim_buf_get_option(bufnr or 0, "filetype"))
+	return arr_contains(excluded.buftypes, api.nvim_get_option_value("buftype", { buf = bufnr or 0 }))
+		or arr_contains(excluded.filetypes, api.nvim_get_option_value("filetype", { buf = bufnr or 0 }))
 		or matches_file_patterns(api.nvim_buf_get_name(bufnr or 0), excluded.patterns)
 end
 
