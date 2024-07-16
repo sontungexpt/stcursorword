@@ -47,7 +47,7 @@ local default_configs = {
 	},
 }
 
-local matchdelete = function()
+local function matchdelete()
 	if w.stcursorword ~= nil then
 		fn.matchdelete(w.stcursorword)
 		w.stcursorword = nil
@@ -56,7 +56,7 @@ local matchdelete = function()
 	end
 end
 
-local highlight_same = function(configs)
+local function highlight_same(configs)
 	local cursor_pos = get_cursor(0)
 	local cursor_column = cursor_pos[2]
 	local cursor_line = cursor_pos[1]
@@ -96,27 +96,27 @@ local highlight_same = function(configs)
 	end
 end
 
-local arr_contains = function(tbl, value)
+local function arr_contains(tbl, value)
 	for _, v in ipairs(tbl) do
 		if v == value then return true end
 	end
 	return false
 end
 
-local matches_file_patterns = function(file_name, file_patterns)
+local function matches_file_patterns(file_name, file_patterns)
 	for _, pattern in ipairs(file_patterns) do
 		if file_name:match(pattern) then return true end
 	end
 	return false
 end
 
-local is_disabled = function(excluded, bufnr)
+local function is_disabled(excluded, bufnr)
 	return arr_contains(excluded.buftypes, api.nvim_get_option_value("buftype", { buf = bufnr or 0 }))
 		or arr_contains(excluded.filetypes, api.nvim_get_option_value("filetype", { buf = bufnr or 0 }))
 		or matches_file_patterns(api.nvim_buf_get_name(bufnr or 0), excluded.patterns)
 end
 
-local enable = function(configs)
+local function enable(configs)
 	-- initial when plugin is loaded
 	hl(0, PLUG_NAME, configs.highlight)
 	local group = api.nvim_create_augroup(PLUG_NAME, { clear = true })
@@ -166,13 +166,13 @@ local enable = function(configs)
 	enabled = true
 end
 
-local disable = function()
+local function disable()
 	matchdelete()
 	api.nvim_del_augroup_by_name(PLUG_NAME)
 	enabled = false
 end
 
-local toggle = function(configs)
+local function toggle(configs)
 	if enabled then
 		disable()
 	else
@@ -180,7 +180,7 @@ local toggle = function(configs)
 	end
 end
 
-local setup_command = function(configs)
+local function setup_command(configs)
 	api.nvim_create_user_command("CursorwordToggle", function() toggle(configs) end, { nargs = 0 })
 	api.nvim_create_user_command("CursorwordEnable", function() enable(configs) end, { nargs = 0 })
 	api.nvim_create_user_command("CursorwordDisable", disable, { nargs = 0 })
@@ -203,7 +203,7 @@ local function merge_config(default_opts, user_opts)
 	return default_opts
 end
 
-M.setup = function(user_opts)
+function M.setup(user_opts)
 	local opts = merge_config(default_configs, user_opts)
 	setup_command(opts)
 	enable(opts)
