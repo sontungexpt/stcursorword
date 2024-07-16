@@ -1,12 +1,13 @@
 local vim = vim
 local w, fn, api = vim.w, vim.fn, vim.api
-local hl, autocmd, get_cursor, get_line, matchstrpos, matchadd =
+local hl, autocmd, get_cursor, get_line, matchstrpos, matchadd, strdisplaywidth =
 	api.nvim_set_hl,
 	api.nvim_create_autocmd,
 	api.nvim_win_get_cursor,
 	api.nvim_get_current_line,
 	fn.matchstrpos,
-	fn.matchadd
+	fn.matchadd,
+	fn.strdisplaywidth
 
 local PLUG_NAME = "stcursorword"
 local enabled = false
@@ -89,7 +90,8 @@ local function highlight_same(configs)
 		prev_start_column = matches[2]
 		prev_end_column = matches[3]
 
-		if #word < configs.min_word_length or #word > configs.max_word_length then return end
+		local word_len = strdisplaywidth(word)
+		if word_len < configs.min_word_length or word_len > configs.max_word_length then return end
 
 		w.stcursorword =
 			matchadd(PLUG_NAME, [[\(\<\|\W\|\s\)\zs]] .. word .. [[\ze\(\s\|[^[:alnum:]_]\|$\)]], -1)
@@ -180,12 +182,6 @@ local function toggle(configs)
 	end
 end
 
-local function setup_command(configs)
-	api.nvim_create_user_command("CursorwordToggle", function() toggle(configs) end, { nargs = 0 })
-	api.nvim_create_user_command("CursorwordEnable", function() enable(configs) end, { nargs = 0 })
-	api.nvim_create_user_command("CursorwordDisable", disable, { nargs = 0 })
-end
-
 local function merge_config(default_opts, user_opts)
 	local default_options_type = type(default_opts)
 
@@ -205,7 +201,20 @@ end
 
 function M.setup(user_opts)
 	local opts = merge_config(default_configs, user_opts)
-	setup_command(opts)
+	api.nvim_create_user_command("Cursorword", function(args)
+		local arg = string.lower(args.args)
+		if arg == "enable" then
+			enable(opts)
+		elseif arg == "disable" then
+			disable()
+		elseif arg == "toggle" then
+			toggle(opts)
+		end
+	end, {
+		nargs = 1,
+		complete = function() return { "enable", "disable", "toggle" } end,
+		desc = "Enable or disable cursorword",
+	})
 	enable(opts)
 end
 
