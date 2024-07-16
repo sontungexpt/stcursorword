@@ -87,11 +87,13 @@ https://github.com/sontungexpt/stcursorword/assets/92097639/d00be822-dfcf-47e8-8
 
 ## Usage
 
-| **Command**          | **Description**                             |
-| -------------------- | ------------------------------------------- |
-| `:CursorwordEnable`  | Toggle highlight the word under the cursor  |
-| `:CursorwordEnable`  | Enable highlight the word under the cursor  |
-| `:CursorwordDisable` | Disable highlight the word under the cursor |
+`:Cursorword` command
+
+| **Args**  | **Description**                             |
+| --------- | ------------------------------------------- |
+| `toggle`  | Toggle highlight the word under the cursor  |
+| `enable`  | Enable highlight the word under the cursor  |
+| `disable` | Disable highlight the word under the cursor |
 
 ## Contributing
 
