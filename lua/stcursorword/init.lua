@@ -155,7 +155,7 @@ local enable = function(configs)
 
 	autocmd({ "BufEnter", "WinEnter" }, {
 		group = group,
-		callback = function(args)
+		callback = function()
 			-- Wait for 8ms to ensure the buffer is fully loaded to avoid errors.
 			-- If the buffer is not fully loaded:
 			-- - The current line is 0.
@@ -163,7 +163,7 @@ local enable = function(configs)
 			-- - The file type (filetype) is nil.
 			skip_cursormoved = true
 			vim.defer_fn(function()
-				disabled = check_disabled(configs.excluded, args.buf)
+				disabled = check_disabled(configs.excluded, 0)
 				if not disabled then highlight_same(configs) end
 			end, 8)
 		end,
