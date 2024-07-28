@@ -50,7 +50,7 @@ local default_configs = {
 
 local function matchdelete()
 	if w.stcursorword ~= nil then
-		fn.matchdelete(w.stcursorword)
+		pcall(fn.matchdelete, w.stcursorword)
 		w.stcursorword = nil
 		prev_start_column = math.huge
 		prev_end_column = -1
