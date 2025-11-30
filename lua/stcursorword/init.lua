@@ -188,7 +188,7 @@ end
 
 local disable = function()
 	matchdelete()
-	api.nvim_del_augroup_by_name(PLUG_NAME)
+	pcall(api.nvim_del_augroup_by_name, PLUG_NAME)
 	enabled = false
 end
 
